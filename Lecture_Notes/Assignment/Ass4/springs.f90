@@ -20,6 +20,29 @@ program springs
     do row = 1, n !for every row in the matrix D
         print*, D(row,:) !print the row out
     end do
+
+    !Now we use the trans(Q, n) to check if its a transpose
+    transD = trans(D, size(D,1))
+    !if all(D == transD) then
+    !   print*, "matrix is symmetric"
     
 end program springs
+
+real trans(Q, n) result(retval)
+    implicit none
+    integer, intent(in) :: n
+    real, intent(in) :: Q(n, n) ! Removed 'allocatable'
+    integer :: i, j              ! Declared properly; removed duplicate 'n'
+    do i = 1, n
+        do j = 1, n
+        a = Q(i,j) ! Changed x(n,n) to x(i,i)
+        b = Q(j,i)
+        Q(i,j) = b
+        Q(j,i) = a
+        end do
+    end do                         ! Fixed missing 'end do'
+
+    retval = sum_val            ! Assigned the result to your return variable
+end function trans
+
 
