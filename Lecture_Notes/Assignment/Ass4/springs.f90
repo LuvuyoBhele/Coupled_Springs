@@ -191,3 +191,74 @@ real function trc(x, m) result(retval)
 
     retval = sum_val            ! Assigned the result to your return variable
 end function trc
+
+
+function sol(A,x) result(retval)
+    real, intent(in) :: A(:,:), x(:)
+    real :: retval(size(x))
+    real :: sum
+    integer :: i, j, n
+    n = size(A,1)
+    do i = 1, n
+        sum = 0.0
+        do j = 1,n
+            sum = sum + A(i,j)*x(j)
+        end do
+        retval(i)=sum
+    end do
+
+end function sol
+
+real function dot(p,q) result(retval)
+    real, allocatable :: p(:), q(:), prod(:)
+    integer :: index, n
+    n = size(p,1)
+    allocate(p(n))
+    allocate(q(n))
+    allocate(prod(n))
+    sum = 0
+    prod = p * q
+    do index = 1, 3
+        sum = sum + prod(index)
+    end do
+    retval = sum
+end function dot
+
+
+function eigen_vec(A,x) result(lambda) 
+    interface
+        function sol(A,x) result(retval)
+           real, intent(in) :: A(:,:), x(:)
+            real :: retval(size(x))
+        end function sol
+    end interface
+    integer :: n
+    real, allocatable :: sol_vec(:)
+    
+    n = size(A,1)
+    allocate(sol_vec(n))
+    sol_vec = sol(A,x)
+    lambda = sol_vec(1)/x(1)
+end function eigen_vec
+
+subroutine gram_schmidt(A)
+    interface
+        real function dot(p,q) result(retval)
+        real, allocatable :: p(:), q(:), prod(:)
+    end interface 
+    real, allocatable :: A(:,:), w(:), Q(:,:)
+    integer n, m, index1, index2, c
+    n = size(A,1)
+    allocate(w(n))
+    allocate(Q(n,n))
+    do index1 = 1, n
+        if (index1=1) then
+            Q(index1,:) = A(index1,:)
+        else
+            do index2 = 1, index1
+                c = dot(Q(),A())/dot(Q(),Q())
+            end do
+            A(index1,:)
+    end do
+
+    
