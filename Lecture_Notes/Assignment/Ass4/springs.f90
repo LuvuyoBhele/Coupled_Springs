@@ -32,6 +32,13 @@ program springs
             integer, intent(in) :: n
             real, intent(in) :: x(n, n) ! Removed 'allocatable'
         end function trc
+
+        subroutine gram_schmidt(A)
+            real, intent(in) :: A(:,:)
+        end subroutine gram_schmidt
+
+    
+
     end interface
 
 
@@ -70,6 +77,8 @@ program springs
     
     trace = trc(D,size(D,1))
     print*, "The trace of trc(D):", trace
+
+    call gram_schmidt(trace)
 
 end program springs
 
@@ -210,15 +219,16 @@ function sol(A,x) result(retval)
 end function sol
 
 real function dot(p,q) result(retval)
-    real, allocatable :: p(:), q(:), prod(:)
+    real, intent(in) :: p(:), q(:)
+    real, allocatable :: prod(:)
     integer :: index, n
+    real :: sum
+
     n = size(p,1)
-    allocate(p(n))
-    allocate(q(n))
     allocate(prod(n))
     sum = 0
     prod = p * q
-    do index = 1, 3
+    do index = 1, n
         sum = sum + prod(index)
     end do
     retval = sum
@@ -226,12 +236,17 @@ end function dot
 
 
 function eigen_vec(A,x) result(lambda) 
+
+    real, intent(in) :: A(:,:), x(:)
+    real :: lambda
+
     interface
         function sol(A,x) result(retval)
            real, intent(in) :: A(:,:), x(:)
             real :: retval(size(x))
         end function sol
     end interface
+
     integer :: n
     real, allocatable :: sol_vec(:)
     
@@ -247,8 +262,8 @@ subroutine gram_schmidt(A)
             real, intent(in) :: p(:), q(:)
         end function
     end interface
-
-    real, allocatable :: A(:,:), w(:), Q(:,:)
+    real, intent(in) :: A(:,:)
+    real, allocatable :: w(:), Q(:,:)
     integer n, m, index1, index2, c
 
     n = size(A,1)
