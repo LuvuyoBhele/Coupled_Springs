@@ -244,21 +244,30 @@ end function eigen_vec
 subroutine gram_schmidt(A)
     interface
         real function dot(p,q) result(retval)
-        real, allocatable :: p(:), q(:), prod(:)
-    end interface 
+            real, intent(in) :: p(:), q(:)
+        end function
+    end interface
+
     real, allocatable :: A(:,:), w(:), Q(:,:)
     integer n, m, index1, index2, c
+
     n = size(A,1)
+
     allocate(w(n))
     allocate(Q(n,n))
+
     do index1 = 1, n
-        if (index1=1) then
-            Q(index1,:) = A(index1,:)
-        else
-            do index2 = 1, index1
-                c = dot(Q(),A())/dot(Q(),Q())
-            end do
-            A(index1,:)
+
+        Q(index1,:) = A(index1,:)
+
+        do index2 = 1, index1-1
+
+            c = dot(Q(index2,:),A(index1,:)) / dot(Q(index2,:),Q(index2,:))
+
+            Q(index1,:) = Q(index1,:) - c*Q(index2,:)
+
+        end do
+
     end do
 
-    
+end subroutine gram_schmidt
