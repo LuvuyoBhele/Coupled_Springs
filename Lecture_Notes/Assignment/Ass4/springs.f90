@@ -2,7 +2,7 @@ program springs
     implicit none
     integer :: n, row, col
     real :: determinanat, trace
-    real, allocatable :: D(:,:), transD(:,:)
+    real, allocatable :: D(:,:), transD(:,:), R(:,:)
 
     interface
         recursive function det(A) result(retval)!
@@ -33,10 +33,17 @@ program springs
             real, intent(in) :: x(n, n) ! Removed 'allocatable'
         end function trc
 
-        subroutine gram_schmidt(A)
-            real, intent(in) :: A(:,:)
+        subroutine gram_schmidt(Q)
+            real, intent(inout) :: Q(:,:)
         end subroutine gram_schmidt
 
+        
+        function mtx_multi(mtx1, mtx2, q, n, p) result(retval)
+            integer :: row_index, col_index, m, q, p, n 
+            real, intent(in) :: mtx1(q,n), mtx2(n,p) !input matrices are adjustable matricies with adjustable dimensions
+            real :: mtx3(q,p)  !introduce a matrix with adjustable dimensions
+            real :: retval(q,p) 
+        end function mtx_multi
     
 
     end interface
@@ -78,7 +85,15 @@ program springs
     trace = trc(D,size(D,1))
     print*, "The trace of trc(D):", trace
 
-    call gram_schmidt(trace)
+    call gram_schmidt(transD)
+   
+    allocate(R(n,n))
+    R = mtx_multi(transD,D,n,n,n)
+    print*, 'The triangle matrix is'
+    do row = 1, n !for every row in the matrix D
+        print*, R(row,:) !print the row out
+    end do
+
 
 end program springs
 
@@ -256,33 +271,67 @@ function eigen_vec(A,x) result(lambda)
     lambda = sol_vec(1)/x(1)
 end function eigen_vec
 
-subroutine gram_schmidt(A)
+
+subroutine gram_schmidt(Q)
     interface
         real function dot(p,q) result(retval)
             real, intent(in) :: p(:), q(:)
         end function
     end interface
-    real, intent(in) :: A(:,:)
-    real, allocatable :: w(:), Q(:,:)
-    integer n, m, index1, index2, c
 
-    n = size(A,1)
+    real, intent(inout) :: Q(:,:)
+    real :: c, norm
+    integer n, index1, index2
 
-    allocate(w(n))
-    allocate(Q(n,n))
+    n = size(Q,1)
 
     do index1 = 1, n
 
-        Q(index1,:) = A(index1,:)
-
         do index2 = 1, index1-1
 
-            c = dot(Q(index2,:),A(index1,:)) / dot(Q(index2,:),Q(index2,:))
-
-            Q(index1,:) = Q(index1,:) - c*Q(index2,:)
+            c = dot(Q(index2,:),Q(index2,:))
+            if (c > 1.0e-12) then
+                c = dot(Q(index2,:),Q(index1,:)) / c
+                Q(index1,:) = Q(index1,:) - c*Q(index2,:)
+            end if
 
         end do
 
+        norm = sqrt(dot_product(Q(index1,:),Q(index1,:)))
+
+        if (norm > 1.0e-12) then
+            Q(index1,:) = Q(index1,:) / norm
+        end if
+
+    end do
+
+    do index1 = 1, n
+        print *, Q(index1,:)
     end do
 
 end subroutine gram_schmidt
+
+
+function mtx_multi(mtx1, mtx2, q, n, p) result(retval)
+    integer :: row_index, col_index, m, q, p, n 
+    real, intent(in) :: mtx1(q,n), mtx2(n,p) !input matrices are adjustable matricies with adjustable dimensions
+    real :: mtx3(q,p)  !introduce a matrix with adjustable dimensions
+    real :: retval(q,p) 
+
+    !mtx(matrix,1) this give the number of rows
+    !mtx(matrix,2) this give the number of col
+
+    ! Matrix multiplication
+    do row_index = 1, q       ! for every row
+        do col_index = 1, p    ! for every column
+            mtx3(row_index, col_index) = 0.0
+            do m = 1, size(mtx1,1)
+                mtx3(row_index,col_index) = mtx3(row_index,col_index) + mtx1(row_index,m) * mtx2(m,col_index) !here you're multiply the row
+            end do
+        end do
+    end do
+
+    retval = mtx3
+
+    
+end function mtx_multi
