@@ -335,3 +335,26 @@ function mtx_multi(mtx1, mtx2, q, n, p) result(retval)
 
     
 end function mtx_multi
+
+
+subroutine Q_i(D)
+    interface
+        subroutine gram_schmidt(D)
+            real, intent(inout) :: D(:,:)
+        end subroutine gram_schmidt
+
+        function mtx_multi(mtx1, mtx2, q, n, p) result(retval)
+            integer :: row_index, col_index, m, q, p, n 
+            real, intent(in) :: mtx1(q,n), mtx2(n,p) !input matrices are adjustable matricies with adjustable dimensions
+            real :: mtx3(q,p)  !introduce a matrix with adjustable dimensions
+            real :: retval(q,p) 
+        end function mtx_multi
+    end interface
+
+
+    Q = gram_schmidt(D) !this will calculate Q
+    trans_Q = trans(Q,n)
+    R = mtx_multi(trans_Q,D,n,n,n)!this will calculate R
+    Q = mtx_multi(R,Q,n,n,n)!this will calculate R
+    
+end subroutine
