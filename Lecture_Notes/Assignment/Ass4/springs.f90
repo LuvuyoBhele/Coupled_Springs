@@ -1,6 +1,6 @@
 program springs
     implicit none
-    integer :: n, row, col
+    integer :: n, row, col, index
     real :: determinanat, trace
     real, allocatable :: D(:,:), transD(:,:), R(:,:)
 
@@ -45,6 +45,9 @@ program springs
             real :: retval(q,p) 
         end function mtx_multi
     
+        subroutine Q_i(D)
+            real, intent(inout) :: D(:,:)
+        end subroutine Q_i
 
     end interface
 
@@ -69,10 +72,11 @@ program springs
         print*, D(row,:) !print the row out
     end do
 
-    
+    allocate(transD(n,n))
     !Now we use the trans(Q, n) to check if its a transpose
     transD = trans(D,size(D,1))
     if (all(D == transD)) then
+
        print*, "matrix is symmetric"
     end if
 
@@ -92,6 +96,10 @@ program springs
     print*, 'The triangle matrix is'
     do row = 1, n !for every row in the matrix D
         print*, R(row,:) !print the row out
+    end do 
+
+    do index = 0, 1
+        call Q_i(D)
     end do
 
 
@@ -304,7 +312,7 @@ subroutine gram_schmidt(Q)
         end if
 
     end do
-
+    print*, 'the diagonalized matrix is'
     do index1 = 1, n
         print *, Q(index1,:)
     end do
@@ -338,23 +346,42 @@ end function mtx_multi
 
 
 subroutine Q_i(D)
+    implicit none
+
     interface
         subroutine gram_schmidt(D)
             real, intent(inout) :: D(:,:)
         end subroutine gram_schmidt
 
         function mtx_multi(mtx1, mtx2, q, n, p) result(retval)
-            integer :: row_index, col_index, m, q, p, n 
-            real, intent(in) :: mtx1(q,n), mtx2(n,p) !input matrices are adjustable matricies with adjustable dimensions
-            real :: mtx3(q,p)  !introduce a matrix with adjustable dimensions
-            real :: retval(q,p) 
+            integer :: q, n, p, m
+            real, intent(in) :: mtx1(q,n), mtx2(n,p)
+            real :: retval(q,p)
         end function mtx_multi
+
+        function trans(Q,n) result(retval)
+            integer, intent(in) :: n
+            real, intent(inout) :: Q(n,n)
+            real :: retval(n,n)
+        end function trans
     end interface
 
+    real, intent(inout) :: D(:,:)
+    real, allocatable :: Q(:,:), trans_Q(:,:), R(:,:)
+    integer :: n
 
-    Q = gram_schmidt(D) !this will calculate Q
+    n = size(D,1)
+
+    allocate(Q(n,n), trans_Q(n,n), R(n,n))
+
+    Q = D
+
+    call gram_schmidt(Q)
+
     trans_Q = trans(Q,n)
-    R = mtx_multi(trans_Q,D,n,n,n)!this will calculate R
-    Q = mtx_multi(R,Q,n,n,n)!this will calculate R
-    
-end subroutine
+
+    R = mtx_multi(trans_Q,D,n,n,n)
+
+    Q = mtx_multi(R,Q,n,n,n)
+
+end subroutine Q_i
