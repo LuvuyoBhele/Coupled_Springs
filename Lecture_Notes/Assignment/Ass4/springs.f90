@@ -2,7 +2,7 @@ program springs
     implicit none
     integer :: n, row, col, index
     real :: determinanat, trace
-    real, allocatable :: D(:,:), transD(:,:), R(:,:)
+    real, allocatable :: D(:,:), transD(:,:), R(:,:), V(:,:)
 
     interface
         recursive function det(A) result(retval)!
@@ -44,11 +44,17 @@ program springs
             real :: mtx3(q,p)  !introduce a matrix with adjustable dimensions
             real :: retval(q,p) 
         end function mtx_multi
+
+
     
-        subroutine Q_i(D)
-            real, intent(inout) :: D(:,:)
+        subroutine Q_i(D,V)
+            real, intent(inout) :: D(:,:), V(:,:)
         end subroutine Q_i
 
+        !function eigen_vec(A,x) result(lambda) 
+        !real, intent(in) :: A(:,:), x(:) !declare system of equations A and constant vector x
+        !    real :: lambda !declare the eigenvalue
+        !end function eigen_vec
     end interface
 
 
@@ -98,14 +104,32 @@ program springs
     !do row = 1, n !for every row in the matrix D
     !    print*, R(row,:) !print the row out
     !end do 
+    allocate(V(n,n))
 
-    do index = 1, 50
-        call Q_i(D)
+    do row = 1, n
+        do col = 1, n
+            if (col == row) then
+                V(row,col) = 1.0
+            else
+                V(row,col) = 0.0
+            end if
+        end do
+    end do
+    open(1,file='matrix.dat')
+    do index = 1, 100
+        write(1,*) 'matrix',index
+        call Q_i(D,V)
         do row = 1, n !for every row in the matrix D
             print*, D(row,:) !print the row out
         end do
     end do
+    close(1)
+
+    !eigen_vec(D,)
     
+!    print*,'The trace of the numerical approximation',trace(D)
+!    print*,'The determinant of the numerical approximation', det(D) 
+        
 
 end program springs
 
@@ -353,8 +377,9 @@ function mtx_multi(mtx1, mtx2, q, n, p) result(retval)
 end function mtx_multi
 
 
-subroutine Q_i(D)
+subroutine Q_i(D,V)
     implicit none
+    
 
     interface
         subroutine gram_schmidt(D)
@@ -374,7 +399,7 @@ subroutine Q_i(D)
         end function trans
     end interface
 
-    real, intent(inout) :: D(:,:)
+    real, intent(inout) :: D(:,:), V(:,:)
     real, allocatable :: Q(:,:), trans_Q(:,:), R(:,:), I(:,:)
     integer :: n, row
 
@@ -405,7 +430,11 @@ subroutine Q_i(D)
 
     Q = mtx_multi(R,Q,n,n,n)
     print*,"Q_{i+1} becomes"
-
     D=Q
+    do row = 1, n
+        write(1,*) D(row,:)
+    end do
+    
+    V = mtx_multi(V,Q,n,n,n)
 
 end subroutine Q_i
