@@ -23,7 +23,7 @@ program springs
 
         function trans(Q,n) result(retval)
             integer, intent(in) :: n
-            real, intent(inout) :: Q(n,n)
+            real, intent(in) :: Q(n,n)
             real :: retval(n,n)
         end function trans
 
@@ -67,62 +67,67 @@ program springs
             end if
         end do
     end do
-
+    print*,'original system'
     do row = 1, n !for every row in the matrix D
+        
         print*, D(row,:) !print the row out
     end do
 
-    allocate(transD(n,n))
-    !Now we use the trans(Q, n) to check if its a transpose
-    transD = trans(D,size(D,1))
-    if (all(D == transD)) then
-
-       print*, "matrix is symmetric"
-    end if
+    !allocate(transD(n,n))
+    !!Now we use the trans(Q, n) to check if its a transpose
+    !transD = trans(D,size(D,1))
+    !if (all(D == transD)) then
+!
+    !!   print*, "matrix is symmetric"
+    !end if
 
     !Now we compute the trace and determinant
     determinanat = det(D)
-    print*, "The determinant of D: Det(D)=", determinanat
+    !print*, "The determinant of D: Det(D)=", determinanat
 
     !Now we compute the trace
     
     trace = trc(D,size(D,1))
-    print*, "The trace of trc(D):", trace
+    !print*, "The trace of trc(D):", trace
 
-    call gram_schmidt(transD)
-   
-    allocate(R(n,n))
-    R = mtx_multi(transD,D,n,n,n)
-    print*, 'The triangle matrix is'
-    do row = 1, n !for every row in the matrix D
-        print*, R(row,:) !print the row out
-    end do 
+    !call gram_schmidt(transD)
+   !
+    !allocate(R(n,n))
+    !R = mtx_multi(transD,D,n,n,n)
+    !!print*, 'The triangle matrix is'
+    !do row = 1, n !for every row in the matrix D
+    !    print*, R(row,:) !print the row out
+    !end do 
 
-    do index = 0, 1
+    do index = 1, 50
         call Q_i(D)
+        do row = 1, n !for every row in the matrix D
+            print*, D(row,:) !print the row out
+        end do
     end do
-
+    
 
 end program springs
 
-function trans(Q, n) result(retval) !function is to calculate the transpose of the input matrix
-    integer, intent(in) :: n !n is the dimension of matrix 
-    real, intent(inout) :: Q(n, n) ! Removed 'allocatable'
-    real :: retval(n,n) !define output of function as matrix 
-    integer :: i, j   !i and j are the indicies of matrix
-    do i = 1, n ! row of original matrix
-        do j = 1, n ! column of original matrix
-        ! now swap the values that of the elements that have swapped incidees
-            a = Q(i,j) 
-            b = Q(j,i)
-            Q(i,j) = b
-            Q(j,i) = a
+function trans(Q, n) result(retval)
+    integer, intent(in) :: n
+    real, intent(in) :: Q(n,n)
+    real :: retval(n,n)
+    real :: a, b
+    integer :: i, j
+
+    retval = Q
+
+    do i = 1, n
+        do j = i+1, n
+            a = retval(i,j)
+            b = retval(j,i)
+            retval(i,j) = b
+            retval(j,i) = a
         end do
-    end do                         ! Fixed missing 'end do'
+    end do
 
-    retval = Q            ! Assigned the result to your return variable
-end function trans                 ! Fixed missing 'end do'
-
+end function trans
 
 
 recursive real function det(A) result(retval)
@@ -226,44 +231,43 @@ end function trc
 
 
 function sol(A,x) result(retval)
-    real, intent(in) :: A(:,:), x(:)
-    real :: retval(size(x))
-    real :: sum
-    integer :: i, j, n
-    n = size(A,1)
-    do i = 1, n
-        sum = 0.0
-        do j = 1,n
+    real, intent(in) :: A(:,:), x(:) !declaring A as the system we are solving and x is the vector that satisfies the system
+    real :: retval(size(x)) ! decarling the constant variable of system
+    real :: sum !this will be the sum for each component of the vector constant
+    integer :: i, j, n !i = row index; j=column index;n = dimension of vector 
+    n = size(A,1) ! dimension of system of matrix
+    do i = 1, n ! row index
+        sum = 0.0 !the sum of the element in the row
+        do j = 1,n !column index
             sum = sum + A(i,j)*x(j)
-        end do
-        retval(i)=sum
-    end do
-
-end function sol
+        end do!
+        retval(i)=sum!
+    end do!
+end function sol!
 
 real function dot(p,q) result(retval)
-    real, intent(in) :: p(:), q(:)
-    real, allocatable :: prod(:)
-    integer :: index, n
-    real :: sum
+    real, intent(in) :: p(:), q(:) !declare vector p and vector q
+    real, allocatable :: prod(:) !declare vector prod
+    integer :: index, n !declare index for prod vector, declare n the dimension of vectors
+    real :: sum !declare the sum for the summation of of the prod elements
 
-    n = size(p,1)
-    allocate(prod(n))
-    sum = 0
-    prod = p * q
-    do index = 1, n
-        sum = sum + prod(index)
+    n = size(p) !the dimensions of the vector
+    allocate(prod(n)) !define vector of prod
+    sum = 0 !the sum for the final product
+    prod = p * q !the mulitiplication of each element to each element to form a vector prod
+    do index = 1, n! index of prod vector
+        sum = sum + prod(index) !take a en elemnt in prod and and it to sum
     end do
-    retval = sum
+    retval = sum !make sum the out 
 end function dot
 
 
 function eigen_vec(A,x) result(lambda) 
 
-    real, intent(in) :: A(:,:), x(:)
-    real :: lambda
+    real, intent(in) :: A(:,:), x(:) !declare system of equations A and constant vector x
+    real :: lambda !declare the eigenvalue
 
-    interface
+    interface !here we intro the interface to describe define
         function sol(A,x) result(retval)
            real, intent(in) :: A(:,:), x(:)
             real :: retval(size(x))
@@ -273,49 +277,53 @@ function eigen_vec(A,x) result(lambda)
     integer :: n
     real, allocatable :: sol_vec(:)
     
-    n = size(A,1)
-    allocate(sol_vec(n))
-    sol_vec = sol(A,x)
-    lambda = sol_vec(1)/x(1)
+    n = size(A,1) !define the dimension the of A
+    allocate(sol_vec(n)) !declare the dimension of sol_vec
+    sol_vec = sol(A,x) !define the vector that is created from multiplying A and x
+    lambda = sol_vec(1)/x(1) !define the eigen value as the quotient of the constant vector to solution vector 
 end function eigen_vec
 
 
-subroutine gram_schmidt(Q)
+subroutine gram_schmidt(Q) !create a gram_schmidt subroutine 
     interface
         real function dot(p,q) result(retval)
             real, intent(in) :: p(:), q(:)
         end function
     end interface
 
-    real, intent(inout) :: Q(:,:)
-    real :: c, norm
-    integer n, index1, index2
+    real, intent(inout) :: Q(:,:) !declare the matrix Q which we will make orthogonal
+    real :: c, norm !declare c 
+    integer n, index1, index2 !declare n to define dimension; index1 as the row index; index1 as the row index
 
-    n = size(Q,1)
+    n = size(Q,1) !define the dimensions by the row of Q
 
-    do index1 = 1, n
-
-        do index2 = 1, index1-1
-
-            c = dot(Q(index2,:),Q(index2,:))
-            if (c > 1.0e-12) then
-                c = dot(Q(index2,:),Q(index1,:)) / c
-                Q(index1,:) = Q(index1,:) - c*Q(index2,:)
+    do index1 = 1, n !for the column index we're orthogonalizing
+       ! print*, 'Processing column:', index1
+        do index2 = 1, index1-1 !all the vectors we're gonna make orthgonal to
+            c = dot(Q(:,index1),Q(:,index2))/dot(Q(:,index2),Q(:,index2)) !this is the normalizing constant for the denominator
+        !    print*, 'Projection coefficient:', c
+            if (abs(c) > 1.0e-12) then !if condition to make sure normaliziation constant isnt zero
+                Q(:,index1) = Q(:,index1) - c*Q(:,index2) !this is how we calculate the next vector
+        !        print*, 'Vector after projection:'
+        !        print*, Q(:,index1)
             end if
 
         end do
 
-        norm = sqrt(dot_product(Q(index1,:),Q(index1,:)))
+        norm = sqrt(dot_product(Q(:,index1),Q(:,index1)))!normalise the vector the we diagonalised  
 
-        if (norm > 1.0e-12) then
-            Q(index1,:) = Q(index1,:) / norm
+        if (norm > 1.0e-12) then !if the normalisation is greater than zero
+            Q(:,index1) = Q(:,index1) / norm !normalise the vector
+        !    print*, 'Column after normalisation:', index1
+        !    print*, Q(:,index1)
         end if
 
     end do
-    print*, 'the diagonalized matrix is'
-    do index1 = 1, n
-        print *, Q(index1,:)
-    end do
+    !print*, 'the diagonalized matrix is'
+    !do index1 = 1, n
+    !    print *, Q(index1,:)
+    !end do
+!print*,'col 1 and col 2 perp verification:', dot(Q(:,index1),Q(:,index1))
 
 end subroutine gram_schmidt
 
@@ -332,7 +340,7 @@ function mtx_multi(mtx1, mtx2, q, n, p) result(retval)
     ! Matrix multiplication
     do row_index = 1, q       ! for every row
         do col_index = 1, p    ! for every column
-            mtx3(row_index, col_index) = 0.0
+            mtx3(row_index, col_index) = 0.0 !initialise the element
             do m = 1, size(mtx1,1)
                 mtx3(row_index,col_index) = mtx3(row_index,col_index) + mtx1(row_index,m) * mtx2(m,col_index) !here you're multiply the row
             end do
@@ -361,18 +369,18 @@ subroutine Q_i(D)
 
         function trans(Q,n) result(retval)
             integer, intent(in) :: n
-            real, intent(inout) :: Q(n,n)
+            real, intent(in) :: Q(n,n)
             real :: retval(n,n)
         end function trans
     end interface
 
     real, intent(inout) :: D(:,:)
-    real, allocatable :: Q(:,:), trans_Q(:,:), R(:,:)
-    integer :: n
+    real, allocatable :: Q(:,:), trans_Q(:,:), R(:,:), I(:,:)
+    integer :: n, row
 
     n = size(D,1)
 
-    allocate(Q(n,n), trans_Q(n,n), R(n,n))
+    allocate(Q(n,n), trans_Q(n,n), R(n,n), I(n,n))
 
     Q = D
 
@@ -380,8 +388,24 @@ subroutine Q_i(D)
 
     trans_Q = trans(Q,n)
 
+    !check orthogoanlaity
+    I = mtx_multi(trans_Q,Q,n,n,n)
+    print*, "The verification of orthogonality"!"Transpose of Q"
+
+    do row = 1, n
+        print*, I(row,:)
+    end do
+
     R = mtx_multi(trans_Q,D,n,n,n)
+    
+    !print*,"R becomes"
+    !do row = 1, n !for every row in the matrix D
+    !    print*, R(row,:) !print the row out
+    !end do
 
     Q = mtx_multi(R,Q,n,n,n)
+    print*,"Q_{i+1} becomes"
+
+    D=Q
 
 end subroutine Q_i
