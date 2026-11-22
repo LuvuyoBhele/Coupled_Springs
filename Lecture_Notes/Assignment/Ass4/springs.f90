@@ -45,16 +45,14 @@ program springs
             real :: retval(q,p) 
         end function mtx_multi
 
-
-    
         subroutine Q_i(D,V)
             real, intent(inout) :: D(:,:), V(:,:)
         end subroutine Q_i
 
-        !function eigen_vec(A,x) result(lambda) 
-        !real, intent(in) :: A(:,:), x(:) !declare system of equations A and constant vector x
-        !    real :: lambda !declare the eigenvalue
-        !end function eigen_vec
+        subroutine eigenvalue_verification(D,V,n) 
+            integer :: row, col, n
+        end subroutine eigenvalue_verification
+
     end interface
 
 
@@ -124,8 +122,6 @@ program springs
         end do
     end do
     close(1)
-
-    !eigen_vec(D,)
     
 !    print*,'The trace of the numerical approximation',trace(D)
 !    print*,'The determinant of the numerical approximation', det(D) 
@@ -434,7 +430,42 @@ subroutine Q_i(D,V)
     do row = 1, n
         write(1,*) D(row,:)
     end do
-    
+    print*,"V_{i+1} becomes"
     V = mtx_multi(V,Q,n,n,n)
-
+    do row = 1, n
+        write(1,*) V(row,:)
+    end do
 end subroutine Q_i
+
+
+!finish this subroutine
+subroutine eigenvalue_verification(D,V,n) 
+    !V is the matrix that contains modes
+    !D is the original matrix
+    !Q is the matrix withe the eigenvalue
+    real, intent(in) :: D(n,n), V(n), n
+    real, intent(out) :: d_eigen_val
+
+    interface
+        function eigen_vec(A,x) result(lambda) 
+            real, intent(in) :: A(:,:), x(:) !declare system of equations A and constant vector x
+            real :: lambda !declare the eigenvalue
+        end function eigen_vec
+
+        function sol(A,x) result(retval)
+            real, intent(in) :: A(:,:), x(:) !declaring A as the system we are solving and x is the vector that satisfies the system
+            real :: retval(size(x)) ! decarling the constant variable of system
+            real :: sum !this will be the sum for each component of the vector constant
+            integer :: i, j, n !i = row index; j=column index;n = dimension of vector 
+        end function sol
+    end interface
+
+    integer :: row, col, n
+    do col = 1, n
+        v_i = V(:,col) !find the mode 
+        d_eigen_val = eigen_vec(D,v_i) !find the eigenvalue
+        print*, 'the eigenvale to to col', col
+        print*, d_eigen_val
+    end do
+end subroutine eigenvalue_verification
+    
