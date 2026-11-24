@@ -49,8 +49,9 @@ program springs
             real, intent(inout) :: D(:,:), V(:,:)
         end subroutine Q_i
 
-        subroutine eigenvalue_verification(D,V,n) 
-            integer :: row, col, n
+        subroutine eigenvalue_verification(D,V,n)
+            integer, intent(in) :: n
+            real, intent(in) :: D(n,n), V(n,n)
         end subroutine eigenvalue_verification
 
     end interface
@@ -117,15 +118,20 @@ program springs
     do index = 1, 100
         write(1,*) 'matrix',index
         call Q_i(D,V)
-        do row = 1, n !for every row in the matrix D
-            print*, D(row,:) !print the row out
-        end do
     end do
     close(1)
     
 !    print*,'The trace of the numerical approximation',trace(D)
-!    print*,'The determinant of the numerical approximation', det(D) 
-        
+!    print*,'The determinant of the numerical approximation', det(D)
+    print*, "After Q_i subroutine V is"
+    do row = 1, n !for every row in the matrix D
+        print*, V(row,:) !print the row out
+    end do
+
+
+
+    !call eigenvalue_verification(D,V,n)
+    
 
 end program springs
 
@@ -300,7 +306,9 @@ function eigen_vec(A,x) result(lambda)
     n = size(A,1) !define the dimension the of A
     allocate(sol_vec(n)) !declare the dimension of sol_vec
     sol_vec = sol(A,x) !define the vector that is created from multiplying A and x
-    lambda = sol_vec(1)/x(1) !define the eigen value as the quotient of the constant vector to solution vector 
+    print*, "the solution vector", sol_vec
+    print*, "element we're dividing by", x(1)
+    lambda = sol_vec(1)/x(1) !define the eigen value as the quotient of the constant vector to solution vector
 end function eigen_vec
 
 
@@ -396,44 +404,66 @@ subroutine Q_i(D,V)
     end interface
 
     real, intent(inout) :: D(:,:), V(:,:)
-    real, allocatable :: Q(:,:), trans_Q(:,:), R(:,:), I(:,:)
+    real, allocatable :: Q(:,:), trans_Q(:,:), R(:,:), I(:,:), Q_save(:,:)
     integer :: n, row
 
     n = size(D,1)
 
-    allocate(Q(n,n), trans_Q(n,n), R(n,n), I(n,n))
+    allocate(Q(n,n), trans_Q(n,n), R(n,n), I(n,n), Q_save(n,n))
 
     Q = D
 
     call gram_schmidt(Q)
 
+    print*, "Q after Gram Schmidt"
+    do row = 1, n
+        print*, Q(row,:)
+    end do
+
+    Q_save = Q
+
     trans_Q = trans(Q,n)
 
-    !check orthogoanlaity
     I = mtx_multi(trans_Q,Q,n,n,n)
-    print*, "The verification of orthogonality"!"Transpose of Q"
 
+    print*, "The verification of orthogonality"
     do row = 1, n
         print*, I(row,:)
     end do
 
     R = mtx_multi(trans_Q,D,n,n,n)
-    
-    !print*,"R becomes"
-    !do row = 1, n !for every row in the matrix D
-    !    print*, R(row,:) !print the row out
-    !end do
+
+    print*, "R becomes"
+    do row = 1, n
+        print*, R(row,:)
+    end do
+
+    ! Check V before multiplication
+    print*, "V before multiplication"
+    do row = 1, n
+        print*, V(row,:)
+    end do
 
     Q = mtx_multi(R,Q,n,n,n)
-    print*,"Q_{i+1} becomes"
-    D=Q
+
+    print*, "Q_{i+1} becomes"
     do row = 1, n
-        write(1,*) D(row,:)
+        print*, Q(row,:)
     end do
-    print*,"V_{i+1} becomes"
-    V = mtx_multi(V,Q,n,n,n)
+
+    D = Q
+
+    ! Check the saved orthogonal matrix
+    print*, "Q_save used for eigenvectors"
     do row = 1, n
-        write(1,*) V(row,:)
+        print*, Q_save(row,:)
+    end do
+
+    V = mtx_multi(V,Q_save,n,n,n)
+
+    print*, "V_{i+1} becomes"
+    do row = 1, n
+        print*, V(row,:)
     end do
 end subroutine Q_i
 
@@ -443,8 +473,10 @@ subroutine eigenvalue_verification(D,V,n)
     !V is the matrix that contains modes
     !D is the original matrix
     !Q is the matrix withe the eigenvalue
-    real, intent(in) :: D(n,n), V(n), n
-    real, intent(out) :: d_eigen_val
+    real, intent(in) :: D(n,n), V(n,n)
+    integer, intent(in) :: n
+    real :: d_eigen_val
+    real :: v_i(n)
 
     interface
         function eigen_vec(A,x) result(lambda) 
@@ -460,11 +492,11 @@ subroutine eigenvalue_verification(D,V,n)
         end function sol
     end interface
 
-    integer :: row, col, n
+    integer :: row, col
     do col = 1, n
         v_i = V(:,col) !find the mode 
         d_eigen_val = eigen_vec(D,v_i) !find the eigenvalue
-        print*, 'the eigenvale to to col', col
+        print*, 'the eigenvalue to to col', col
         print*, d_eigen_val
     end do
 end subroutine eigenvalue_verification
