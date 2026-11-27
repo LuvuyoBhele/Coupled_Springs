@@ -1,8 +1,8 @@
 program springs
     implicit none
     integer :: n, row, col, index
-    real :: determinanat, trace
-    real, allocatable :: D(:,:), transD(:,:), R(:,:), V(:,:), A_original(:,:)
+    real :: determinanat, trace, lambda_v 
+    real, allocatable :: D(:,:), transD(:,:), R(:,:), V(:,:), A_original(:,:), Dv(:)
 
     interface
         recursive function det(A) result(retval)!
@@ -53,6 +53,16 @@ program springs
             integer, intent(in) :: n
             real, intent(in) :: D(n,n), V(n,n)
         end subroutine eigenvalue_verification
+
+        function sol(A,x) result(retval)
+            real, intent(in) :: A(:,:), x(:)
+            real :: retval(size(x))
+        end function sol
+
+        function eigen_vec(A,x) result(lambda)
+            real, intent(in) :: A(:,:), x(:)
+            real :: lambda
+        end function eigen_vec
 
     end interface
 
@@ -119,11 +129,66 @@ program springs
         end do
     end do
     open(1,file='matrix.dat')
-    do index = 1, 100
+    do index = 1, n
         write(1,*) 'matrix',index
         call Q_i(D,V)
     end do
     close(1)
+
+
+    open(10,file='col_1.dat', status='replace', action='write')
+
+    write(10,*) 'mode',1
+    do index = 1, n
+        write(10,*) V(index,1)
+    end do
+
+    write(10,*) 'Dv'
+    Dv = sol(A_original,V(:,1))
+    do index = 1, n
+        write(10,*) Dv(index)
+    end do
+
+    write(10,*) 'lambda v'
+    lambda_v = eigen_vec(A_original,V(:,1))
+    write(10,*) lambda_v
+
+close(10)
+
+
+ !   open(11,file='col_2.dat', status='replace', action='write')
+ !       write(10,*) 'mode',1
+ !       do index = 1, 
+ !           write(10,*) V(index,1)
+ !       end do
+ !   close(11)
+!
+ !   open(12,file='col_3.dat', status='replace', action='write')
+ !   close(12)
+!
+ !   open(13,file='col_4.dat', status='replace', action='write')
+ !   close(13)
+!
+ !   open(14,file='col_5.dat', status='replace', action='write')
+ !   close(14)
+!
+ !   open(15,file='col_6.dat', status='replace', action='write')
+ !   close(15)
+!
+ !   open(16,file='col_7.dat', status='replace', action='write')
+ !   close(16)
+!
+ !   open(17,file='col_8.dat', status='replace', action='write')
+ !   close(17)
+!
+ !   open(18,file='col_9.dat', status='replace', action='write')
+ !   close(18)
+!
+ !   open(19,file='col_10.dat', status='replace', action='write')
+ !   close(19)
+!
+ !   !open(20,file='col_1.dat', status='replace', action='write')
+    !close(20)
     
 !    print*,'The trace of the numerical approximation',trace(D)
 !    print*,'The determinant of the numerical approximation', det(D)
@@ -510,6 +575,8 @@ subroutine eigenvalue_verification(D,V,n)
         sigma_lambda = sigma_lambda + d_eigen_val
         pi_lambda = pi_lambda*d_eigen_val 
     end do
+
+
 
     print*, "sigma_lambda =", sigma_lambda
     print*, "pi_lambda =", pi_lambda
